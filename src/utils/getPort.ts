@@ -1,0 +1,12 @@
+// File overview: Parses PORT into a usable integer with a safe fallback.
+
+// Keep this helper small and pure so entrypoint code stays easy to scan.
+export function getPort(value: string | undefined, fallback = 3000): number {
+  const parsed = Number(value);
+
+  if (Number.isInteger(parsed) && parsed > 0) {
+    return parsed;
+  }
+
+  return fallback;
+}

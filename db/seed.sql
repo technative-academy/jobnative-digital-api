@@ -1,0 +1,7 @@
+-- File overview: Inserts starter rows so the API has sample data on first run.
+
+INSERT INTO users (name, email)
+VALUES
+  ('Ada Lovelace', 'ada@example.com'),
+  ('Grace Hopper', 'grace@example.com'),
+  ('Margaret Hamilton', 'margaret@example.com');

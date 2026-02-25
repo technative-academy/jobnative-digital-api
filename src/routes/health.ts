@@ -1,0 +1,13 @@
+// File overview: Registers the health-check route used to confirm the API process is running.
+
+import { Router } from 'express';
+
+const router = Router();
+
+// Health-check endpoint used by monitors, load balancers, and container
+// platforms to verify that the API process is running.
+router.get('/', (_req, res) => {
+  res.status(200).json({ ok: true });
+});
+
+export default router;

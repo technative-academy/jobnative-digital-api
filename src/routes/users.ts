@@ -1,0 +1,14 @@
+// File overview: Maps /api/users endpoints to controller methods in the MVC request flow.
+
+import { Router } from 'express';
+
+import usersController from '../controllers/usersController';
+
+const router = Router();
+
+// Route files should map URLs to controller functions and nothing more.
+// Keeping them thin makes the API surface quick to scan and reason about.
+router.get('/', usersController.listUsers);
+router.post('/', usersController.createUser);
+
+export default router;

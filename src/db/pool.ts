@@ -1,0 +1,17 @@
+// File overview: Creates and exports a shared PostgreSQL connection pool for repository queries.
+
+// Create one shared connection pool for the whole application.
+// Reusing connections is faster and avoids exhausting database limits.
+import { Pool } from 'pg';
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL is required for Postgres mode.');
+}
+
+const pool = new Pool({
+  connectionString: databaseUrl
+});
+
+export default pool;

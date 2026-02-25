@@ -1,0 +1,35 @@
+// File overview: Contains user business rules and validation before calling the repository layer.
+
+import usersRepository from '../repositories/usersRepository';
+import AppError from '../errors/AppError';
+
+interface CreateUserPayload {
+  name?: unknown;
+  email?: unknown;
+}
+
+// Services contain business rules and input validation. They sit between
+// controllers (HTTP concerns) and repositories (data access concerns).
+async function listUsers() {
+  return usersRepository.getAll();
+}
+
+async function createUser(payload: CreateUserPayload) {
+  const { name, email } = payload;
+
+  // Validate input before calling the repository. Throwing AppError provides
+  // both the message and status code needed for a clear client response.
+  if (!name || typeof name !== 'string') {
+    throw new AppError(400, '"name" is required.');
+  }
+
+  return usersRepository.create({
+    name: name.trim(),
+    email: typeof email === 'string' ? email.trim() : null
+  });
+}
+
+export default {
+  listUsers,
+  createUser
+};

@@ -1,0 +1,31 @@
+// File overview: Handles /users HTTP requests and delegates business logic to the service layer.
+
+import type { RequestHandler } from 'express';
+
+import usersService from '../services/usersService';
+
+// Controllers translate HTTP requests into service calls and convert service
+// results back into HTTP responses. Business rules remain in the service layer.
+const listUsers: RequestHandler = async (_req, res, next) => {
+  try {
+    const users = await usersService.listUsers();
+    res.status(200).json(users);
+  } catch (error) {
+    // Pass errors to next(error) so the central error handler can respond.
+    next(error);
+  }
+};
+
+const createUser: RequestHandler = async (req, res, next) => {
+  try {
+    const user = await usersService.createUser(req.body ?? {});
+    res.status(201).json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export default {
+  listUsers,
+  createUser
+};

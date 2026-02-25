@@ -1,0 +1,14 @@
+// File overview: Defines an AppError class for expected API errors that include HTTP status codes.
+
+// A custom error class for handling API errors. By extending JavaScript's
+// built-in Error class, we ensure that stack traces are generated correctly
+// and that the error handler can distinguish between anticipated API
+// errors and unexpected application failures.
+export default class AppError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
