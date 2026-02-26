@@ -167,4 +167,3 @@ sudo -u postgres psql -c "ALTER USER \"$USER\" WITH PASSWORD 'postgres';"
 
 **"database does not exist"** — Run `npm run db:create`.
 
-

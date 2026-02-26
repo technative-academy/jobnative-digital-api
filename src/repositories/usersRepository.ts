@@ -20,6 +20,15 @@ async function getAll(): Promise<UserRow[]> {
   return result.rows;
 }
 
+async function getById(id: number): Promise<UserRow | null> {
+  const result = await pool.query<UserRow>(
+    'SELECT id, name, email FROM users WHERE id = $1',
+    [id]
+  );
+
+  return result.rows[0] ?? null;
+}
+
 async function create({ name, email }: CreateUserInput): Promise<UserRow> {
   // Use parameter placeholders ($1, $2) so pg binds values safely.
   const result = await pool.query<UserRow>(
@@ -32,6 +41,6 @@ async function create({ name, email }: CreateUserInput): Promise<UserRow> {
 
 export default {
   getAll,
+  getById,
   create
 };
-
