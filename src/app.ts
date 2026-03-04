@@ -2,7 +2,7 @@
 
 import cors from 'cors';
 import express from 'express';
-import helmet from 'helmet';
+// import helmet from 'helmet';
 import morgan from 'morgan';
 
 import adminCompaniesRouter from './routes/adminCompanies';
@@ -17,13 +17,14 @@ import usersRouter from './routes/users';
 const app = express();
 
 // Parse JSON request bodies so route handlers can read data from req.body.
+
 // Without this middleware, req.body is undefined for JSON requests.
 app.use(express.json());
 // Enable CORS so browser clients on other origins can call this API.
 app.use(cors());
 // Add common HTTP security headers.
 // Helmet applies safe defaults that reduce exposure to common web attacks.
-app.use(helmet());
+// app.use(helmet());
 // Log each request in development format to make local debugging easier.
 app.use(morgan('dev'));
 
@@ -49,8 +50,8 @@ app.get('/', (_req, res) => {
       deleteJobRole: 'DELETE /api/job-roles/:id',
       pendingCompanies: 'GET /api/admin/companies/pending',
       approveCompany: 'PATCH /api/admin/companies/:id/approve',
-      rejectCompany: 'PATCH /api/admin/companies/:id/reject'
-    }
+      rejectCompany: 'PATCH /api/admin/companies/:id/reject',
+    },
   });
 });
 
