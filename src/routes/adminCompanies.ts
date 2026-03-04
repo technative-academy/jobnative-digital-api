@@ -6,6 +6,7 @@ import companiesController from '../controllers/companiesController';
 
 const router = Router();
 
+router.get('/', companiesController.listAllCompanies);
 router.get('/pending', companiesController.listPendingCompanies);
 router.patch('/:id/approve', companiesController.approveCompany);
 router.patch('/:id/reject', companiesController.rejectCompany);

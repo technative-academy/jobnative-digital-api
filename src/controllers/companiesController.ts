@@ -13,6 +13,15 @@ const listCompanies: RequestHandler = async (req, res, next) => {
   }
 };
 
+const listAllCompanies: RequestHandler = async (req, res, next) => {
+  try {
+    const companies = await companiesService.listAllCompanies(req.query);
+    res.status(200).json(companies);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getCompanyById: RequestHandler = async (req, res, next) => {
   try {
     const company = await companiesService.getCompanyById(req.params.id);
@@ -78,6 +87,7 @@ const rejectCompany: RequestHandler = async (req, res, next) => {
 
 export default {
   listCompanies,
+  listAllCompanies,
   getCompanyById,
   createCompany,
   updateCompany,
