@@ -2,7 +2,7 @@
 
 import cors from 'cors';
 import express from 'express';
-// import helmet from 'helmet';
+import helmet from 'helmet';
 import morgan from 'morgan';
 
 import adminCompaniesRouter from './routes/adminCompanies';
@@ -24,7 +24,12 @@ app.use(express.json());
 app.use(cors());
 // Add common HTTP security headers.
 // Helmet applies safe defaults that reduce exposure to common web attacks.
-// app.use(helmet());
+// Now includes the Cross-Origin-Resource-Policy header with a value of "cross-origin" to allow resources to be loaded by any origin, which is necessary for our API to be accessible from different domains.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 // Log each request in development format to make local debugging easier.
 app.use(morgan('dev'));
 
