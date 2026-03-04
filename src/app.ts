@@ -17,6 +17,7 @@ import jobRolesRouter from './routes/jobRoles';
 import technologiesRouter from './routes/technologies';
 import userCompanyStatesRouter from './routes/userCompanyStates';
 import usersRouter from './routes/users';
+import commentsRouter from './routes/comments';
 
 const app = express();
 
@@ -87,8 +88,10 @@ app.use('/api/technologies', technologiesRouter);
 app.use('/api/job-roles', jobRolesRouter);
 app.use('/api/user-company-states', userCompanyStatesRouter);
 app.use('/api/admin/companies', adminCompaniesRouter);
+app.use('/api', commentsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
+
 
 export default app;
