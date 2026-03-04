@@ -9,6 +9,7 @@ import errorHandler from './middleware/errorHandler';
 import notFound from './middleware/notFound';
 import healthRouter from './routes/health';
 import usersRouter from './routes/users';
+import commentsRouter from './routes/comments';
 
 const app = express();
 
@@ -36,10 +37,12 @@ app.get('/', (_req, res) => {
   });
 });
 
-app.use('/health', healthRouter);
+app.use('/api/health', healthRouter);
 app.use('/api/users', usersRouter);
+app.use('/api', commentsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
+
 
 export default app;

@@ -6,3 +6,14 @@ CREATE TABLE users (
   name TEXT NOT NULL,
   email TEXT UNIQUE
 );
+
+DROP TABLE IF EXISTS comments;
+
+CREATE TABLE comments (
+  id serial PRIMARY KEY,
+  company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
