@@ -45,6 +45,10 @@ export interface CompanyFilters {
   jobRoles: string[];
 }
 
+export interface AdminCompanyFilters {
+  status: CompanyStatus | null;
+}
+
 export interface TechnologyInput {
   name: string;
   slug: string;
@@ -176,6 +180,19 @@ async function getApproved({
       ORDER BY c.name ASC
     `,
     [search, location, technologies, jobRoles]
+  );
+
+  return result.rows;
+}
+
+async function getAll({ status }: AdminCompanyFilters): Promise<CompanyRow[]> {
+  const result = await pool.query<CompanyRow>(
+    `
+      ${companyFieldsSql}
+      WHERE ($1::text IS NULL OR c.status = $1::text)
+      ORDER BY c.created_at DESC
+    `,
+    [status]
   );
 
   return result.rows;
@@ -483,6 +500,7 @@ async function deleteById(id: number): Promise<boolean> {
 
 export default {
   getApproved,
+  getAll,
   getById,
   getApprovedById,
   createPending,
