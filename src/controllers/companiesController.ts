@@ -2,6 +2,7 @@
 
 import type { RequestHandler } from 'express';
 
+import AppError from '../errors/AppError';
 import companiesService from '../services/companiesService';
 
 const listCompanies: RequestHandler = async (req, res, next) => {
@@ -24,7 +25,11 @@ const getCompanyById: RequestHandler = async (req, res, next) => {
 
 const createCompany: RequestHandler = async (req, res, next) => {
   try {
-    const company = await companiesService.createCompany(req.body ?? {});
+    if (!req.user) {
+      throw new AppError(401, 'Authentication required.');
+    }
+
+    const company = await companiesService.createCompany(req.body ?? {}, req.user.userId);
     res.status(201).json(company);
   } catch (error) {
     next(error);
@@ -60,7 +65,11 @@ const listPendingCompanies: RequestHandler = async (_req, res, next) => {
 
 const approveCompany: RequestHandler = async (req, res, next) => {
   try {
-    const company = await companiesService.approveCompany(req.params.id, req.body ?? {});
+    if (!req.user) {
+      throw new AppError(401, 'Authentication required.');
+    }
+
+    const company = await companiesService.approveCompany(req.params.id, req.user.userId);
     res.status(200).json(company);
   } catch (error) {
     next(error);
