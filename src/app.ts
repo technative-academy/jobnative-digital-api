@@ -19,13 +19,19 @@ import usersRouter from './routes/users';
 const app = express();
 
 // Parse JSON request bodies so route handlers can read data from req.body.
+
 // Without this middleware, req.body is undefined for JSON requests.
 app.use(express.json());
 // Enable CORS so browser clients on other origins can call this API.
 app.use(cors());
 // Add common HTTP security headers.
 // Helmet applies safe defaults that reduce exposure to common web attacks.
-app.use(helmet());
+// Now includes the Cross-Origin-Resource-Policy header with a value of "cross-origin" to allow resources to be loaded by any origin, which is necessary for our API to be accessible from different domains.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 // Log each request in development format to make local debugging easier.
 app.use(morgan('dev'));
 
@@ -38,7 +44,8 @@ app.get('/', (_req, res) => {
       health: 'GET /health',
       users: 'GET /api/users',
       createUser: 'POST /api/users',
-      companies: 'GET /api/companies?search=&location=&tech=&role=',
+      getAllCompanies: 'GET /api/companies',
+      filterCompanies: 'GET /api/companies?search=&location=&tech=&role=',
       companyById: 'GET /api/companies/:id',
       submitCompany: 'POST /api/companies',
       updateCompany: 'PATCH /api/companies/:id',
@@ -49,6 +56,7 @@ app.get('/', (_req, res) => {
       jobRoles: 'GET /api/job-roles',
       updateJobRole: 'PATCH /api/job-roles/:id',
       deleteJobRole: 'DELETE /api/job-roles/:id',
+      getAllAdminCompanies: 'GET /api/admin/companies?status=',
       pendingCompanies: 'GET /api/admin/companies/pending',
       approveCompany: 'PATCH /api/admin/companies/:id/approve',
       rejectCompany: 'PATCH /api/admin/companies/:id/reject',
@@ -61,7 +69,7 @@ app.get('/', (_req, res) => {
       userCompanyState: 'GET /api/user-company-states/:companyId',
       upsertUserCompanyState: 'PUT /api/user-company-states/:companyId',
       deleteUserCompanyState: 'DELETE /api/user-company-states/:companyId'
-    }
+    },
   });
 });
 

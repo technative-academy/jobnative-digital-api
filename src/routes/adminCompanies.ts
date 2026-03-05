@@ -11,6 +11,8 @@ const router = Router();
 router.use(authenticate);
 router.use(authoriseAdmin);
 
+router.get('/', companiesController.listAllCompanies);
+
 router.get('/pending', companiesController.listPendingCompanies);
 router.patch('/:id/approve', companiesController.approveCompany);
 router.patch('/:id/reject', companiesController.rejectCompany);

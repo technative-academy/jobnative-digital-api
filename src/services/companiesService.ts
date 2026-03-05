@@ -2,6 +2,7 @@
 
 import AppError from '../errors/AppError';
 import companiesRepository, {
+  type CompanyStatus,
   type JobRoleInput,
   type TechnologyInput
 } from '../repositories/companiesRepository';
@@ -12,6 +13,10 @@ interface ListCompaniesQuery {
   tech?: unknown;
   technology?: unknown;
   role?: unknown;
+}
+
+interface ListAllCompaniesQuery {
+  status?: unknown;
 }
 
 interface CreateCompanyPayload {
@@ -54,6 +59,27 @@ function readOptionalQueryParam(value: unknown, field: string): string {
   }
 
   return value.trim();
+}
+
+function readOptionalStatusQueryParam(value: unknown, field: string): CompanyStatus | null {
+  if (value === undefined) {
+    return null;
+  }
+
+  if (Array.isArray(value) || typeof value !== 'string') {
+    throw new AppError(400, `"${field}" must be one of: pending, approved, rejected.`);
+  }
+
+  const trimmed = value.trim().toLowerCase();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  if (trimmed !== 'pending' && trimmed !== 'approved' && trimmed !== 'rejected') {
+    throw new AppError(400, `"${field}" must be one of: pending, approved, rejected.`);
+  }
+
+  return trimmed;
 }
 
 function readRequiredString(value: unknown, field: string): string {
@@ -373,6 +399,12 @@ async function listCompanies(query: ListCompaniesQuery) {
   });
 }
 
+async function listAllCompanies(query: ListAllCompaniesQuery) {
+  const status = readOptionalStatusQueryParam(query.status, 'status');
+
+  return companiesRepository.getAll({ status });
+}
+
 async function getCompanyById(idParam: unknown) {
   const id = readId(idParam);
   const company = await companiesRepository.getApprovedById(id);
@@ -557,6 +589,7 @@ async function rejectCompany(idParam: unknown) {
 
 export default {
   listCompanies,
+  listAllCompanies,
   getCompanyById,
   createCompany,
   updateCompany,

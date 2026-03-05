@@ -219,6 +219,42 @@ describe('API', () => {
     expect(response.body.some((company: { id: number }) => company.id === pendingCompanyId)).toBe(true);
   });
 
+  test('GET /api/admin/companies returns all companies and supports status filter', async () => {
+    const allResponse = await request(app)
+      .get('/api/admin/companies')
+      .set('Authorization', `Bearer ${adminAccessToken}`);
+
+    expect(allResponse.status).toBe(200);
+    expect(Array.isArray(allResponse.body)).toBe(true);
+    expect(allResponse.body.some((company: { id: number }) => company.id === pendingCompanyId)).toBe(true);
+
+    const pendingOnlyResponse = await request(app)
+      .get('/api/admin/companies')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .query({ status: 'pending' });
+
+    expect(pendingOnlyResponse.status).toBe(200);
+    expect(Array.isArray(pendingOnlyResponse.body)).toBe(true);
+    expect(
+      pendingOnlyResponse.body.every(
+        (company: { status: string }) => company.status === 'pending'
+      )
+    ).toBe(true);
+    expect(
+      pendingOnlyResponse.body.some((company: { id: number }) => company.id === pendingCompanyId)
+    ).toBe(true);
+  });
+
+  test('GET /api/admin/companies with invalid status returns 400', async () => {
+    const response = await request(app)
+      .get('/api/admin/companies')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .query({ status: 'unknown' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBeDefined();
+  });
+
   test('PATCH /api/admin/companies/:id/approve changes status to approved', async () => {
     const response = await request(app)
       .patch(`/api/admin/companies/${pendingCompanyId}/approve`)
