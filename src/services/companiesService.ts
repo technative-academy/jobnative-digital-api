@@ -28,7 +28,6 @@ interface CreateCompanyPayload {
   description?: unknown;
   technologyStack?: unknown;
   jobRoles?: unknown;
-  createdByUserId?: unknown;
 }
 
 interface UpdateCompanyPayload {
@@ -40,10 +39,6 @@ interface UpdateCompanyPayload {
   description?: unknown;
   technologyStack?: unknown;
   jobRoles?: unknown;
-}
-
-interface ModerationPayload {
-  approvedByUserId?: unknown;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -421,7 +416,11 @@ async function getCompanyById(idParam: unknown) {
   return company;
 }
 
-async function createCompany(rawPayload: CreateCompanyPayload) {
+async function createCompany(rawPayload: CreateCompanyPayload, createdByUserId: number) {
+  if (!Number.isInteger(createdByUserId) || createdByUserId <= 0) {
+    throw new AppError(401, 'Authentication required.');
+  }
+
   const payload = ensureObjectPayload(rawPayload);
 
   const name = readRequiredString(payload.name, 'name');
@@ -438,8 +437,6 @@ async function createCompany(rawPayload: CreateCompanyPayload) {
     readOptionalStringArray(payload.jobRoles, 'jobRoles'),
     'jobRoles'
   );
-  const createdByUserId = readOptionalPositiveInt(payload.createdByUserId, 'createdByUserId');
-
   return companiesRepository.createPending({
     name,
     website,
@@ -533,8 +530,12 @@ async function listPendingCompanies() {
 
 async function approveCompany(
   idParam: unknown,
-  payload: ModerationPayload = {}
+  approvedByUserId: number
 ) {
+  if (!Number.isInteger(approvedByUserId) || approvedByUserId <= 0) {
+    throw new AppError(403, 'Admin access required.');
+  }
+
   const id = readId(idParam);
   const company = await companiesRepository.getById(id);
 
@@ -549,7 +550,6 @@ async function approveCompany(
     );
   }
 
-  const approvedByUserId = readOptionalPositiveInt(payload.approvedByUserId, 'approvedByUserId');
   const updated = await companiesRepository.updateStatus(
     id,
     'approved',

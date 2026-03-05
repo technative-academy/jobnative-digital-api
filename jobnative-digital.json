@@ -1,0 +1,1462 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "JobNative Digital API",
+    "description": "JobNative Digital is a company directory API where TechNative students can discover and track companies that employ software developers. It uses Express + TypeScript with JWT Bearer token authentication (access + refresh tokens).\n",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://jobnative-digital-api-production.up.railway.app",
+      "description": "Production (Railway)"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "API information",
+        "description": "Returns basic information about the API.",
+        "operationId": "getApiInfo",
+        "responses": {
+          "200": {
+            "description": "API info retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_200"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "description": "Returns status of the API service.",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_200_1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "description": "Creates a new user and returns access and refresh tokens.",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/auth_register_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully with tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokens"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "User login",
+        "description": "Authenticates user and returns access and refresh tokens.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/auth_login_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful with tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokens"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Refresh access token",
+        "description": "Returns a new access token using a valid refresh token.",
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/auth_refresh_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Access token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_200_2"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout user",
+        "description": "Revokes the refresh token.",
+        "operationId": "logout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/auth_logout_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_200_3"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current user profile",
+        "description": "Returns the profile of the authenticated user.",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "Current user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/companies": {
+      "get": {
+        "tags": ["Companies"],
+        "summary": "List approved companies",
+        "description": "Returns a list of approved companies with optional filters.",
+        "operationId": "listCompanies",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search term for company name or description",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "description": "Filter by company location",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tech",
+            "in": "query",
+            "description": "Filter by technology name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "Filter by job role name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of approved companies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Company"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Companies"],
+        "summary": "Submit a new company",
+        "description": "Submit a new company with status 'pending'. Requires authentication. Accepts arrays technologyStack[] and jobRoles[] which auto-create entries if not existing.\n",
+        "operationId": "createCompany",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/api_companies_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Company submitted successfully with pending status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Company"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/companies/{id}": {
+      "get": {
+        "tags": ["Companies"],
+        "summary": "Get approved company by ID",
+        "description": "Returns details of an approved company by its ID.",
+        "operationId": "getCompanyById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Company ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Company"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Companies"],
+        "summary": "Delete company by ID",
+        "description": "Admin only. Deletes a company.",
+        "operationId": "deleteCompany",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Company ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Company deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": ["Companies"],
+        "summary": "Update company by ID",
+        "description": "Admin only. Updates company details.",
+        "operationId": "updateCompany",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Company ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/companies_id_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Company updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Company"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/companies/pending": {
+      "get": {
+        "tags": ["AdminCompanies"],
+        "summary": "List companies pending approval",
+        "description": "Admin only. Returns companies with status 'pending'.",
+        "operationId": "listPendingCompanies",
+        "responses": {
+          "200": {
+            "description": "List of pending companies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Company"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/companies/{id}/approve": {
+      "patch": {
+        "tags": ["AdminCompanies"],
+        "summary": "Approve company by ID",
+        "description": "Admin only. Approves a pending company.",
+        "operationId": "approveCompany",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Company ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company approved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Company"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/companies/{id}/reject": {
+      "patch": {
+        "tags": ["AdminCompanies"],
+        "summary": "Reject company by ID",
+        "description": "Admin only. Rejects a pending company.",
+        "operationId": "rejectCompany",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Company ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company rejected successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Company"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/job-roles": {
+      "get": {
+        "tags": ["JobRoles"],
+        "summary": "List all job roles",
+        "description": "Returns all job roles.",
+        "operationId": "listJobRoles",
+        "responses": {
+          "200": {
+            "description": "List of job roles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JobRole"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/job-roles/{id}": {
+      "delete": {
+        "tags": ["JobRoles"],
+        "summary": "Delete job role by ID",
+        "description": "Admin only. Deletes a job role.",
+        "operationId": "deleteJobRole",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Job role ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Job role deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": ["JobRoles"],
+        "summary": "Update job role by ID",
+        "description": "Admin only. Updates a job role.",
+        "operationId": "updateJobRole",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Job role ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jobroles_id_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Job role updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobRole"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/technologies": {
+      "get": {
+        "tags": ["Technologies"],
+        "summary": "List all technologies",
+        "description": "Returns all technologies.",
+        "operationId": "listTechnologies",
+        "responses": {
+          "200": {
+            "description": "List of technologies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Technology"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/technologies/{id}": {
+      "delete": {
+        "tags": ["Technologies"],
+        "summary": "Delete technology by ID",
+        "description": "Admin only. Deletes a technology.",
+        "operationId": "deleteTechnology",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Technology ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Technology deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": ["Technologies"],
+        "summary": "Update technology by ID",
+        "description": "Admin only. Updates a technology.",
+        "operationId": "updateTechnology",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Technology ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/technologies_id_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Technology updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Technology"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/user-company-states": {
+      "get": {
+        "tags": ["UserCompanyStates"],
+        "summary": "List user-company states",
+        "description": "Returns all user-company states for the authenticated user.",
+        "operationId": "listStates",
+        "responses": {
+          "200": {
+            "description": "List of user-company states",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserCompanyState"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/user-company-states/{companyId}": {
+      "get": {
+        "tags": ["UserCompanyStates"],
+        "summary": "Get user-company state by company ID",
+        "description": "Returns the user-specific state for a given company.",
+        "operationId": "getState",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "description": "Company ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User-company state found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserCompanyState"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["UserCompanyStates"],
+        "summary": "Upsert user-company state by company ID",
+        "description": "Creates or updates the user-company state.",
+        "operationId": "upsertState",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "description": "Company ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/usercompanystates_companyId_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User-company state upserted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserCompanyState"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["UserCompanyStates"],
+        "summary": "Delete user-company state by company ID",
+        "description": "Deletes the user-company state.",
+        "operationId": "deleteState",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "description": "Company ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "User-company state deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "List all users",
+        "description": "Admin only. Returns all users.",
+        "operationId": "listUsers",
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthTokens": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT access token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "JWT refresh token",
+            "example": "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4uLi4="
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 123
+          },
+          "name": {
+            "type": "string",
+            "example": "Jane Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jane@example.com"
+          },
+          "role": {
+            "type": "string",
+            "example": "user",
+            "enum": ["user", "admin"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-10T12:00:00Z"
+          }
+        },
+        "description": "A user registered on the platform"
+      },
+      "Company": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 456
+          },
+          "name": {
+            "type": "string",
+            "example": "Acme Software Inc."
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://acme.com"
+          },
+          "linkedin": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "example": "https://linkedin.com/company/acme"
+          },
+          "industry": {
+            "type": "string",
+            "example": "Software Development"
+          },
+          "location": {
+            "type": "string",
+            "example": "San Francisco, CA"
+          },
+          "description": {
+            "type": "string",
+            "example": "Leading software development company."
+          },
+          "status": {
+            "type": "string",
+            "example": "approved",
+            "enum": ["pending", "approved", "rejected"]
+          },
+          "createdByUserId": {
+            "type": "integer",
+            "example": 123
+          },
+          "approvedByUserId": {
+            "type": "integer",
+            "nullable": true,
+            "example": 1
+          },
+          "technologyStack": {
+            "type": "array",
+            "example": ["React", "Node.js"],
+            "items": {
+              "type": "string"
+            }
+          },
+          "jobRoles": {
+            "type": "array",
+            "example": ["Frontend Developer", "Backend Developer"],
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-10T12:00:00Z"
+          }
+        },
+        "description": "A company that employs software developers"
+      },
+      "JobRole": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 10
+          },
+          "name": {
+            "type": "string",
+            "example": "Frontend Developer"
+          },
+          "slug": {
+            "type": "string",
+            "example": "frontend-developer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-10T12:00:00Z"
+          }
+        },
+        "description": "A job role"
+      },
+      "Technology": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 20
+          },
+          "name": {
+            "type": "string",
+            "example": "React"
+          },
+          "slug": {
+            "type": "string",
+            "example": "react"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-10T12:00:00Z"
+          }
+        },
+        "description": "A technology used by companies"
+      },
+      "UserCompanyState": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "example": 123
+          },
+          "companyId": {
+            "type": "integer",
+            "example": 456
+          },
+          "dashboardColumn": {
+            "type": "string",
+            "example": "todo",
+            "enum": ["todo", "contacted", "favourite"]
+          },
+          "personalNotes": {
+            "type": "string",
+            "example": "Interested in applying next quarter."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-10T12:00:00Z"
+          }
+        },
+        "description": "User-specific state for a company on personal dashboard"
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "An error occurred."
+          }
+        }
+      },
+      "inline_response_200": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "JobNative Digital API"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "description": {
+            "type": "string",
+            "example": "Company directory API for TechNative students"
+          }
+        }
+      },
+      "inline_response_200_1": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          }
+        }
+      },
+      "auth_register_body": {
+        "required": ["email", "name", "password"],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Jane Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jane@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "strongPassword123"
+          }
+        }
+      },
+      "auth_login_body": {
+        "required": ["email", "password"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jane@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "strongPassword123"
+          }
+        }
+      },
+      "auth_refresh_body": {
+        "required": ["refreshToken"],
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      },
+      "inline_response_200_2": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      },
+      "auth_logout_body": {
+        "required": ["refreshToken"],
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      },
+      "inline_response_200_3": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Logged out successfully"
+          }
+        }
+      },
+      "api_companies_body": {
+        "required": ["name", "website"],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Acme Software Inc."
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://acme.com"
+          },
+          "linkedin": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "example": "https://linkedin.com/company/acme"
+          },
+          "industry": {
+            "type": "string",
+            "example": "Software Development"
+          },
+          "location": {
+            "type": "string",
+            "example": "San Francisco, CA"
+          },
+          "description": {
+            "type": "string",
+            "example": "Leading software development company."
+          },
+          "technologyStack": {
+            "type": "array",
+            "example": ["React", "Node.js"],
+            "items": {
+              "type": "string"
+            }
+          },
+          "jobRoles": {
+            "type": "array",
+            "example": ["Frontend Developer", "Backend Developer"],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "companies_id_body": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri"
+          },
+          "linkedin": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "industry": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected"]
+          },
+          "technologyStack": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "jobRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "jobroles_id_body": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
+      "technologies_id_body": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
+      "usercompanystates_companyId_body": {
+        "type": "object",
+        "properties": {
+          "dashboardColumn": {
+            "type": "string",
+            "example": "todo",
+            "enum": ["todo", "contacted", "favourite"]
+          },
+          "personalNotes": {
+            "type": "string",
+            "example": "Interested in applying next quarter."
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Unauthorized - Authentication required or failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Bad request - Validation error or malformed request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict - Resource already exists or unique constraint violation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

@@ -8,6 +8,13 @@ Enum company_status {
   rejected
 }
 
+Enum event_status {
+  pending
+  approved
+  rejected
+}
+
+
 Enum dashboard_column {
   todo
   contacted
@@ -53,6 +60,50 @@ Table companies {
     (name)
     (location)
     (website) [unique]
+  }
+}
+
+Table events {
+  id serial [pk]
+  name varchar(255) [not null]
+  company_id int 
+  website varchar(2048) [unique]
+  location varchar(120)
+  start_time timestampz [not null]
+  end_time timestampz 
+  description text
+  status event_status [not null, default: "pending"]
+  created_by_user_id int
+  created_at timestamptz [not null, default: `now()`]
+  approved_by_user_id int
+  approved_at timestamptz
+
+  Indexes {
+    (status)
+    (name)
+    (location)
+  }
+}
+
+Table event_technologies {
+  event_id int [not null]
+  technology_id int [not null]
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (event_id, technology_id) [pk]
+    (technology_id)
+  }
+}
+
+Table event_sponsors {
+  event_id int [not null]
+  company_id int [not null]
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (event_id, company_id) [pk]
+    (company_id)
   }
 }
 
@@ -169,3 +220,13 @@ Ref: company_technologies.technology_id > technologies.id [delete: cascade]
 
 Ref: company_job_roles.company_id > companies.id [delete: cascade]
 Ref: company_job_roles.job_role_id > job_roles.id [delete: cascade]
+
+Ref: events.created_by_user_id > users.id [delete: set null]
+Ref: events.approved_by_user_id > users.id [delete: set null]
+
+Ref: event_technologies.event_id > events.id [delete: cascade]
+Ref: event_technologies.technology_id > technologies.id [delete: cascade]
+
+Ref: event_sponsors.event_id > events.id [delete: cascade]
+Ref: event_sponsors.company_id > companies.id [delete: cascade]
+
