@@ -4,6 +4,8 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from './swagger.json';
 
 import adminCompaniesRouter from './routes/adminCompanies';
 import authRouter from './routes/auth';
@@ -34,6 +36,10 @@ app.use(
 );
 // Log each request in development format to make local debugging easier.
 app.use(morgan('dev'));
+
+// Serve interactive API documentation powered by Swagger UI.
+// Visit /api-docs in your browser to explore and test your endpoints.
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Provide a simple root endpoint so visiting the API URL in a browser
 // shows available routes instead of an immediate 404 response.
