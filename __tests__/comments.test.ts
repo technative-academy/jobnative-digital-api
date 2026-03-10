@@ -4,8 +4,8 @@ import pool from '../src/db/pool';
 
 async function seedUserAndCompany() {
   const userRes = await pool.query<{ id: number }>(
-    `INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id`,
-    ['Test User', 'test@example.com']
+    `INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id`,
+    ['Test User', 'test@example.com', 'dummy_hash']
   );
   const companyRes = await pool.query<{ id: number }>(
     `INSERT INTO companies (name, website, created_by_user_id)

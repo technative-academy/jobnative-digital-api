@@ -5,7 +5,7 @@ module.exports = {
   testEnvironment: 'node',
 
   setupFiles: ['<rootDir>/__tests__/setupEnv.setup.ts'],
-  setupFilesAfterEnv: ['<rootDir>/__tests__/dbSetup.setup.ts'],
+  globalSetup: '<rootDir>/__tests__/globalSetup.ts',
 
   testMatch: ['**/__tests__/**/*.test.ts'],
 
@@ -15,5 +15,4 @@ module.exports = {
     '<rootDir>/__tests__/setupEnv.setup.ts',
     '<rootDir>/__tests__/dbSetup.setup.ts',
   ],
-  runInBand: true,
 };
