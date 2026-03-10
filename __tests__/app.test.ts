@@ -14,6 +14,8 @@ afterAll(async () => {
 describe('API', () => {
   let pendingCompanyId: number | null = null;
   let approvedCompanyId: number | null = null;
+  let approvedEventId: number | null = null;
+  let pendingEventId: number | null = null;
   let rejectedCompanyId: number | null = null;
   let typoTechnologyId: number | null = null;
   let typoJobRoleId: number | null = null;
@@ -55,6 +57,7 @@ describe('API', () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
   });
+
 
   test('POST /api/companies with missing website returns 400', async () => {
     const response = await request(app).post('/api/companies').send({ name: 'Missing Website Inc.' });
@@ -292,6 +295,99 @@ describe('API', () => {
 
   test('GET /api/companies/:id returns 404 for rejected companies', async () => {
     const response = await request(app).get(`/api/companies/${rejectedCompanyId}`);
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBeDefined();
+  });
+
+  test('GET /api/events returns an array', async () => {
+    const response = await request(app).get('/api/events');
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    if (response.body.length > 0) {
+      approvedEventId = response.body[0].id;
+    }
+  });
+
+  test('POST /api/events with missing name returns 400', async () => {
+    const response = await request(app).post('/api/events').send({
+      website: `https://event-${Date.now()}.example.com`,
+      start_time: new Date().toISOString()
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBeDefined();
+  });
+
+  test('POST /api/events creates a pending event with technologies and sponsors', async () => {
+    const token = Date.now();
+    const response = await request(app).post('/api/events').send({
+      name: `Jobnative Demo Day ${token}`,
+      website: `https://jobnative-demo-${token}.example.com`,
+      location: 'Remote UK',
+      description: 'Hiring showcase for full stack engineers.',
+      start_time: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+      end_time: new Date(Date.now() + 1000 * 60 * 60 * 26).toISOString(),
+      technologyStack: ['React', 'Node.js'],
+      sponsorCompanyIds: [1, 2],
+      createdByUserId: 1
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe('pending');
+    expect(response.body.technologyStack).toEqual(['node.js', 'react']);
+    expect(response.body.sponsorNames.length).toBeGreaterThan(0);
+
+    pendingEventId = response.body.id;
+  });
+
+  test('PATCH /api/events/:id updates event details and associations', async () => {
+    const response = await request(app)
+      .patch(`/api/events/${pendingEventId}`)
+      .send({
+        location: 'Remote UK (Updated)',
+        technologyStack: ['TypeScript', 'Node.js'],
+        sponsorCompanyIds: [2],
+        end_time: new Date(Date.now() + 1000 * 60 * 60 * 30).toISOString()
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.location).toBe('Remote UK (Updated)');
+    expect(response.body.technologyStack).toEqual(['node.js', 'typescript']);
+    expect(response.body.sponsorNames).toEqual(['StoryStream']);
+  });
+
+  test('GET /api/events supports search, location, and technology filters', async () => {
+    const response = await request(app).get('/api/events').query({
+      search: 'brighton tech',
+      location: 'brighton',
+      tech: 'react',
+    });
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(
+      response.body.some((event: { name: string }) => event.name === 'Brighton Tech Meetup')
+    ).toBe(true);
+  });
+
+  test('GET /api/events/:id returns the approved events', async () => {
+    const response = await request(app).get(`/api/events/${approvedEventId}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(approvedEventId);
+    expect(response.body.status).toBe('approved');
+  });
+
+  test('DELETE /api/events/:id removes the pending event', async () => {
+    const response = await request(app).delete(`/api/events/${pendingEventId}`);
+
+    expect(response.status).toBe(204);
+  });
+
+  test('GET /api/events/:id returns 404 for deleted events', async () => {
+    const response = await request(app).get(`/api/events/${pendingEventId}`);
 
     expect(response.status).toBe(404);
     expect(response.body.message).toBeDefined();

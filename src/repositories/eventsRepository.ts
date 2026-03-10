@@ -357,7 +357,7 @@ async function createPending(input: CreateEventInput): Promise<EventRow> {
           status,
           created_by_user_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
         RETURNING id
       `,
       [

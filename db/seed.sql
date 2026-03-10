@@ -56,6 +56,56 @@ VALUES
     NOW()
   );
 
+INSERT INTO events (
+  name,
+  website,
+  location,
+  start_time,
+  end_time,
+  description,
+  status,
+  created_by_user_id,
+  approved_by_user_id,
+  approved_at
+)
+VALUES
+  (
+    'Brighton Tech Meetup',
+    'https://brighton-tech-meetup.example.com',
+    'Brighton',
+    NOW() + INTERVAL '14 days',
+    NOW() + INTERVAL '14 days 2 hours',
+    'Monthly meetup focused on modern web development and cloud infrastructure.',
+    'approved',
+    1,
+    2,
+    NOW()
+  ),
+  (
+    'AI Product Showcase',
+    'https://ai-product-showcase.example.com',
+    'London',
+    NOW() + INTERVAL '30 days',
+    NOW() + INTERVAL '30 days 3 hours',
+    'Demo day for AI-driven products and developer tooling.',
+    'approved',
+    2,
+    1,
+    NOW()
+  ),
+  (
+    'Full Stack Hiring Sprint',
+    'https://full-stack-hiring.example.com',
+    'London / Brighton',
+    NOW() + INTERVAL '45 days',
+    NOW() + INTERVAL '45 days 4 hours',
+    'Fast-paced hiring event with lightning talks from sponsoring companies.',
+    'approved',
+    3,
+    2,
+    NOW()
+  );
+
 INSERT INTO technologies (name, slug)
 VALUES
   ('Python', 'python'),
@@ -100,6 +150,48 @@ VALUES
     (SELECT id FROM technologies WHERE slug = 'typescript')
   );
 
+INSERT INTO event_technologies (event_id, technology_id)
+VALUES
+  (
+    (SELECT id FROM events WHERE name = 'Brighton Tech Meetup'),
+    (SELECT id FROM technologies WHERE slug = 'react')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'Brighton Tech Meetup'),
+    (SELECT id FROM technologies WHERE slug = 'aws')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'AI Product Showcase'),
+    (SELECT id FROM technologies WHERE slug = 'python')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'AI Product Showcase'),
+    (SELECT id FROM technologies WHERE slug = 'django')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'Full Stack Hiring Sprint'),
+    (SELECT id FROM technologies WHERE slug = 'node.js')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'Full Stack Hiring Sprint'),
+    (SELECT id FROM technologies WHERE slug = 'typescript')
+  );
+
+INSERT INTO event_sponsors (event_id, company_id)
+VALUES
+  (
+    (SELECT id FROM events WHERE name = 'Brighton Tech Meetup'),
+    (SELECT id FROM companies WHERE name = 'DabApps')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'AI Product Showcase'),
+    (SELECT id FROM companies WHERE name = 'StoryStream')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'Full Stack Hiring Sprint'),
+    (SELECT id FROM companies WHERE name = 'Dapper Labs Limited')
+  );
+
 INSERT INTO job_roles (name, slug)
 VALUES
   ('Software Engineer', 'software-engineer'),
@@ -131,63 +223,3 @@ VALUES
     (SELECT id FROM job_roles WHERE slug = 'full-stack-developer')
   );
 
-INSERT INTO events (
-  name,
-  company_id,
-  website,
-  location,
-  start_time,
-  end_time,
-  description,
-  status,
-  created_by_user_id
-)
-VALUES
-(
-  'AI Innovation Summit',
-  1,
-  'https://ai-innovation-summit.com',
-  'London, UK',
-  '2026-06-10 09:00:00+00',
-  '2026-06-10 17:00:00+00',
-  'A conference exploring the latest developments in artificial intelligence.',
-  'pending',
-  1
-),
-(
-  'Frontend Dev Conference',
-  2,
-  'https://frontend-devconf.com',
-  'Manchester, UK',
-  '2026-07-15 10:00:00+00',
-  '2026-07-15 18:00:00+00',
-  'A gathering of frontend developers discussing modern frameworks and tooling.',
-  'approved',
-  2
-),
-(
-  'Cloud & DevOps Expo',
-  3,
-  'https://cloud-devops-expo.com',
-  'Birmingham, UK',
-  '2026-09-05 09:30:00+00',
-  '2026-09-05 16:30:00+00',
-  'An event focused on cloud infrastructure, DevOps practices, and scalability.',
-  'pending',
-  1
-);
-
-INSERT INTO event_technologies (event_id, technology_id)
-VALUES
-(1, 1),
-(1, 3),
-(2, 1),
-(2, 2),
-(3, 3);
-
-INSERT INTO event_sponsors (event_id, company_id)
-VALUES
-(1, 2),
-(2, 1),
-(2, 3),
-(3, 2);
