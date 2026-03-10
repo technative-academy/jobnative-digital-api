@@ -9,6 +9,7 @@ import adminCompaniesRouter from './routes/adminCompanies';
 import errorHandler from './middleware/errorHandler';
 import notFound from './middleware/notFound';
 import companiesRouter from './routes/companies';
+import eventsRouter from './routes/events';
 import healthRouter from './routes/health';
 import jobRolesRouter from './routes/jobRoles';
 import technologiesRouter from './routes/technologies';
@@ -48,6 +49,12 @@ app.get('/', (_req, res) => {
       submitCompany: 'POST /api/companies',
       updateCompany: 'PATCH /api/companies/:id',
       deleteCompany: 'DELETE /api/companies/:id',
+      getAllEvents: 'GET /api/events',
+      filterEvents: 'GET /api/events?search=&location=&tech=',
+      eventById: 'GET /api/events/:id',
+      submitEvent: 'POST /api/events',
+      updateEvent: 'PATCH /api/events/:id',
+      deleteEvent: 'DELETE /api/events/:id',
       technologies: 'GET /api/technologies',
       updateTechnology: 'PATCH /api/technologies/:id',
       deleteTechnology: 'DELETE /api/technologies/:id',
@@ -65,6 +72,7 @@ app.get('/', (_req, res) => {
 app.use('/health', healthRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/companies', companiesRouter);
+app.use('/api/events', eventsRouter)
 app.use('/api/technologies', technologiesRouter);
 app.use('/api/job-roles', jobRolesRouter);
 app.use('/api/admin/companies', adminCompaniesRouter);

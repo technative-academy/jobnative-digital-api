@@ -23,6 +23,7 @@ export interface SponsorRow {
 export interface EventRow {
   id: number;
   name: string;
+  companyId: number | null;
   website: string;
   location: string | null;
   startTime: string;
@@ -56,6 +57,7 @@ export interface TechnologyInput {
 
 export interface CreateEventInput {
   name: string;
+  companyId: number | null;
   website: string;
   location: string | null;
   startTime: string;
@@ -68,6 +70,7 @@ export interface CreateEventInput {
 
 export interface UpdateEventInput {
   name?: string;
+  companyId?: number | null;
   website?: string;
   location?: string | null;
   startTime?: string;
@@ -81,6 +84,7 @@ const eventFieldsSql = `
   SELECT
     e.id,
     e.name,
+    e.company_id AS "companyId",
     e.website,
     e.location,
     e.start_time AS "startTime",
@@ -202,200 +206,6 @@ async function getApprovedById(id: number): Promise<EventRow | null> {
 
   return result.rows[0] ?? null;
 }
-
-// async function upsertTechnology(client: PoolClient, technology: TechnologyInput): Promise<number> {
-//   const result = await client.query<{ id: number }>(
-//     `
-//       INSERT INTO technologies (name, slug)
-//       VALUES ($1, $2)
-//       ON CONFLICT (slug)
-//       DO UPDATE SET name = EXCLUDED.name
-//       RETURNING id
-//     `,
-//     [technology.name, technology.slug]
-//   );
-
-//   const row = result.rows[0];
-//   if (!row) {
-//     throw new Error('Failed to upsert technology.');
-//   }
-
-//   return row.id;
-// }
-
-// async function upsertJobRole(client: PoolClient, jobRole: JobRoleInput): Promise<number> {
-//   const result = await client.query<{ id: number }>(
-//     `
-//       INSERT INTO job_roles (name, slug)
-//       VALUES ($1, $2)
-//       ON CONFLICT (slug)
-//       DO UPDATE SET name = EXCLUDED.name
-//       RETURNING id
-//     `,
-//     [jobRole.name, jobRole.slug]
-//   );
-
-//   const row = result.rows[0];
-//   if (!row) {
-//     throw new Error('Failed to upsert job role.');
-//   }
-
-//   return row.id;
-// }
-
-async function updateStatus(
-  id: number,
-  status: ModerationStatus,
-  approvedByUserId: number | null
-): Promise<EventRow | null> {
-  const nextApprovedByUserId = status === 'approved' ? approvedByUserId : null;
-  const nextApprovedAt = status === 'approved' ? new Date().toISOString() : null;
-
-  const result = await pool.query<{ id: number }>(
-    `
-      UPDATE events
-      SET
-        status = $2,
-        approved_by_user_id = $3,
-        approved_at = $4
-      WHERE id = $1
-      RETURNING id
-    `,
-    [id, status, nextApprovedByUserId, nextApprovedAt]
-  );
-
-  const updatedId = result.rows[0]?.id;
-
-  if (!updatedId) {
-    return null;
-  }
-
-  return getById(updatedId);
-}
-
-async function updateById(id: number, input: UpdateEventInput): Promise<EventRow | null> {
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
-    const setClauses: string[] = [];
-    const values: Array<string | number | null> = [];
-
-    type BaseUpdateField =
-      | 'name'
-      | 'website'
-      | 'location'
-      | 'startTime'
-      | 'endTime'
-      | 'description';
-
-    const map: Array<[BaseUpdateField, string]> = [
-      ['name', 'name'],
-      ['website', 'website'],
-      ['location', 'location'],
-      ['startTime', 'start_time'],
-      ['endTime', 'end_time'],
-      ['description', 'description']
-    ];
-
-    for (const [inputKey, columnName] of map) {
-      const value = input[inputKey];
-      if (value !== undefined) {
-        values.push(value ?? null);
-        setClauses.push(`${columnName} = $${values.length}`);
-      }
-    }
-
-    if (setClauses.length > 0) {
-      values.push(id);
-      await client.query(
-        `
-          UPDATE events
-          SET ${setClauses.join(', ')}
-          WHERE id = $${values.length}
-        `,
-        values
-      );
-    }
-
-    if (input.technologies !== undefined) {
-      await replaceEventTechnologies(client, id, input.technologies);
-    }
-
-    if (input.sponsorCompanyIds !== undefined) {
-      await replaceEventSponsors(client, id, input.sponsorCompanyIds);
-    }
-
-    const updatedEvent = await getByIdWithClient(client, id);
-
-    await client.query('COMMIT');
-    return updatedEvent;
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-async function createPending(input: CreateEventInput): Promise<EventRow> {
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
-    const createResult = await client.query<{ id: number }>(
-      `
-        INSERT INTO events (
-          name,
-          website,
-          location,
-          start_time,
-          end_time,
-          description,
-          status,
-          created_by_user_id
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)
-        RETURNING id
-      `,
-      [
-        input.name,
-        input.website,
-        input.location,
-        input.startTime,
-        input.endTime,
-        input.description,
-        input.createdByUserId
-      ]
-    );
-
-    const createdEventId = createResult.rows[0]?.id;
-
-    if (!createdEventId) {
-      throw new Error('Failed to create event.');
-    }
-
-    await replaceEventTechnologies(client, createdEventId, input.technologies);
-    await replaceEventSponsors(client, createdEventId, input.sponsorCompanyIds);
-
-    const createdEvent = await getByIdWithClient(client, createdEventId);
-
-    if (!createdEvent) {
-      throw new Error('Failed to load created event.');
-    }
-
-    await client.query('COMMIT');
-    return createdEvent;
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
 async function upsertTechnology(client: PoolClient, technology: TechnologyInput): Promise<number> {
   const result = await client.query<{ id: number }>(
     `
@@ -475,20 +285,64 @@ async function replaceEventSponsors(
   }
 }
 
-async function deleteById(id: number): Promise<boolean> {
-  const result = await pool.query(
-    `
-      DELETE FROM events
-      WHERE id = $1
-    `,
-    [id]
-  );
+async function createPending(input: CreateEventInput): Promise<EventRow> {
+  const client = await pool.connect();
 
-  return result.rowCount !== null && result.rowCount > 0;
+  try {
+    await client.query('BEGIN');
+
+    const createResult = await client.query<{ id: number }>(
+      `
+        INSERT INTO events (
+          name,
+          company_id,
+          website,
+          location,
+          start_time,
+          end_time,
+          description,
+          status,
+          created_by_user_id
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)
+        RETURNING id
+      `,
+      [
+        input.name,
+        input.companyId,
+        input.website,
+        input.location,
+        input.startTime,
+        input.endTime,
+        input.description,
+        input.createdByUserId
+      ]
+    );
+
+    const createdEventId = createResult.rows[0]?.id;
+
+    if (!createdEventId) {
+      throw new Error('Failed to create event.');
+    }
+
+    await replaceEventTechnologies(client, createdEventId, input.technologies);
+    await replaceEventSponsors(client, createdEventId, input.sponsorCompanyIds);
+
+    const createdEvent = await getByIdWithClient(client, createdEventId);
+
+    if (!createdEvent) {
+      throw new Error('Failed to load created event.');
+    }
+
+    await client.query('COMMIT');
+    return createdEvent;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
-
-
-
 
 async function getPending(): Promise<EventRow[]> {
   const result = await pool.query<EventRow>(
@@ -500,6 +354,116 @@ async function getPending(): Promise<EventRow[]> {
   );
 
   return result.rows;
+}
+
+async function updateStatus(
+  id: number,
+  status: ModerationStatus,
+  approvedByUserId: number | null
+): Promise<EventRow | null> {
+  const nextApprovedByUserId = status === 'approved' ? approvedByUserId : null;
+  const nextApprovedAt = status === 'approved' ? new Date().toISOString() : null;
+
+  const result = await pool.query<{ id: number }>(
+    `
+      UPDATE events
+      SET
+        status = $2,
+        approved_by_user_id = $3,
+        approved_at = $4
+      WHERE id = $1
+      RETURNING id
+    `,
+    [id, status, nextApprovedByUserId, nextApprovedAt]
+  );
+
+  const updatedId = result.rows[0]?.id;
+
+  if (!updatedId) {
+    return null;
+  }
+
+  return getById(updatedId);
+}
+
+async function updateById(id: number, input: UpdateEventInput): Promise<EventRow | null> {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const setClauses: string[] = [];
+    const values: Array<string | number | null> = [];
+
+    type BaseUpdateField =
+      | 'name'
+      | 'companyId'
+      | 'website'
+      | 'location'
+      | 'startTime'
+      | 'endTime'
+      | 'description';
+
+    const map: Array<[BaseUpdateField, string]> = [
+      ['name', 'name'],
+      ['companyId', 'company_id'],
+      ['website', 'website'],
+      ['location', 'location'],
+      ['startTime', 'start_time'],
+      ['endTime', 'end_time'],
+      ['description', 'description']
+    ];
+
+    for (const [inputKey, columnName] of map) {
+      const value = input[inputKey];
+      if (value !== undefined) {
+        values.push(value ?? null);
+        setClauses.push(`${columnName} = $${values.length}`);
+      }
+    }
+
+    if (setClauses.length > 0) {
+      values.push(id);
+      await client.query(
+        `
+          UPDATE events
+          SET ${setClauses.join(', ')}
+          WHERE id = $${values.length}
+        `,
+        values
+      );
+    }
+
+    if (input.technologies !== undefined) {
+      await replaceEventTechnologies(client, id, input.technologies);
+    }
+
+    if (input.sponsorCompanyIds !== undefined) {
+      await replaceEventSponsors(client, id, input.sponsorCompanyIds);
+    }
+
+    const updatedEvent = await getByIdWithClient(client, id);
+
+    await client.query('COMMIT');
+    return updatedEvent;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function deleteById(id: number): Promise<boolean> {
+  const result = await pool.query(
+    `
+      DELETE FROM events
+      WHERE id = $1
+    `,
+    [id]
+  );
+
+  return result.rowCount !== null && result.rowCount > 0;
 }
 
 export default {

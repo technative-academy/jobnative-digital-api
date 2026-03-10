@@ -23,6 +23,7 @@ export interface SponsorRow {
 export interface EventRow {
   id: number;
   name: string;
+  companyId: number | null;
   website: string;
   location: string | null;
   startTime: string;
@@ -56,6 +57,7 @@ export interface TechnologyInput {
 
 export interface CreateEventInput {
   name: string;
+  companyId: number | null;
   website: string;
   location: string | null;
   startTime: string;
@@ -68,6 +70,7 @@ export interface CreateEventInput {
 
 export interface UpdateEventInput {
   name?: string;
+  companyId?: number | null;
   website?: string;
   location?: string | null;
   startTime?: string;
@@ -81,6 +84,7 @@ const eventFieldsSql = `
   SELECT
     e.id,
     e.name,
+    e.company_id AS "companyId",
     e.website,
     e.location,
     e.start_time AS "startTime",
@@ -284,6 +288,7 @@ async function updateById(id: number, input: UpdateEventInput): Promise<EventRow
 
     type BaseUpdateField =
       | 'name'
+      | 'companyId'
       | 'website'
       | 'location'
       | 'startTime'
@@ -292,6 +297,7 @@ async function updateById(id: number, input: UpdateEventInput): Promise<EventRow
 
     const map: Array<[BaseUpdateField, string]> = [
       ['name', 'name'],
+      ['companyId', 'company_id'],
       ['website', 'website'],
       ['location', 'location'],
       ['startTime', 'start_time'],
@@ -349,6 +355,7 @@ async function createPending(input: CreateEventInput): Promise<EventRow> {
       `
         INSERT INTO events (
           name,
+          company_id,
           website,
           location,
           start_time,
@@ -362,6 +369,7 @@ async function createPending(input: CreateEventInput): Promise<EventRow> {
       `,
       [
         input.name,
+        input.companyId,
         input.website,
         input.location,
         input.startTime,

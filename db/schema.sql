@@ -9,6 +9,9 @@ DROP TABLE IF EXISTS company_tags CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS companies CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS events CASCADE;
+DROP TABLE IF EXISTS event_technologies CASCADE;
+DROP TABLE IF EXISTS event_sponsors CASCADE;
 
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
@@ -34,7 +37,7 @@ CREATE TABLE companies (
 CREATE TABLE events (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL CHECK (btrim(name) <> ''),
-  company_id INTEGER REFERENCES companies(id) ON DELETE SET NULL,
+  -- company_id INTEGER REFERENCES companies(id) ON DELETE SET NULL,
   website TEXT NOT NULL UNIQUE CHECK (btrim(website) <> ''),
   location TEXT,
   start_time TIMESTAMPTZ NOT NULL,
@@ -83,7 +86,7 @@ CREATE TABLE event_technologies (
 );
 
 CREATE TABLE event_sponsors (
-  event_id INTEGER NOT NULL REFERENCES event(id) ON DELETE CASCADE,
+  event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (event_id, company_id)
