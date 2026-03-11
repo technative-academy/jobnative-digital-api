@@ -11,6 +11,9 @@ DROP TABLE IF EXISTS company_tags CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS companies CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS events CASCADE;
+DROP TABLE IF EXISTS event_technologies CASCADE;
+DROP TABLE IF EXISTS event_sponsors CASCADE;
 
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
@@ -29,6 +32,22 @@ CREATE TABLE companies (
   linkedin TEXT UNIQUE CHECK (linkedin IS NULL OR btrim(linkedin) <> ''),
   industry TEXT,
   location TEXT,
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  approved_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  approved_at TIMESTAMPTZ
+);
+
+CREATE TABLE events (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL CHECK (btrim(name) <> ''),
+  -- company_id INTEGER REFERENCES companies(id) ON DELETE SET NULL,
+  website TEXT NOT NULL UNIQUE CHECK (btrim(website) <> ''),
+  location TEXT,
+  start_time TIMESTAMPTZ NOT NULL,
+  end_time TIMESTAMPTZ,
   description TEXT,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
   created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -65,6 +84,20 @@ CREATE TABLE company_job_roles (
   PRIMARY KEY (company_id, job_role_id)
 );
 
+CREATE TABLE event_technologies (
+  event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  technology_id INTEGER NOT NULL REFERENCES technologies(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (event_id, technology_id)
+);
+
+CREATE TABLE event_sponsors (
+  event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (event_id, company_id)
+);
+
 CREATE TABLE user_company_states (
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -99,6 +132,9 @@ CREATE INDEX users_created_at_idx ON users (created_at);
 CREATE INDEX companies_status_idx ON companies (status);
 CREATE INDEX companies_name_idx ON companies ((lower(name)));
 CREATE INDEX companies_location_idx ON companies ((lower(location)));
+CREATE INDEX events_status_idx ON events (status);
+CREATE INDEX events_name_idx ON events ((lower(name)));
+CREATE INDEX events_location_idx ON events ((lower(location)));
 CREATE INDEX company_technologies_technology_idx ON company_technologies (technology_id);
 CREATE INDEX company_job_roles_role_idx ON company_job_roles (job_role_id);
 CREATE INDEX user_company_states_dashboard_idx ON user_company_states (user_id, dashboard_column);
