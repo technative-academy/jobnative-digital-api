@@ -25,8 +25,8 @@ CREATE TABLE users (
 CREATE TABLE companies (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL CHECK (btrim(name) <> ''),
-  website TEXT NOT NULL UNIQUE CHECK (btrim(website) <> ''),
-  linkedin TEXT UNIQUE CHECK (linkedin IS NULL OR btrim(linkedin) <> ''),
+  website TEXT CHECK (btrim(website) <> ''),
+  linkedin TEXT CHECK (linkedin IS NULL OR btrim(linkedin) <> ''),
   industry TEXT,
   location TEXT,
   description TEXT,
