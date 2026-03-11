@@ -13,10 +13,8 @@ interface ListCompaniesQuery {
   tech?: unknown;
   technology?: unknown;
   role?: unknown;
-}
-
-interface ListAllCompaniesQuery {
-  status?: unknown;
+  page?: unknown;  // ADD
+  limit?: unknown; // ADD
 }
 
 interface CreateCompanyPayload {
@@ -39,6 +37,10 @@ interface UpdateCompanyPayload {
   description?: unknown;
   technologyStack?: unknown;
   jobRoles?: unknown;
+}
+
+interface ListAllCompaniesQuery {
+  status?: unknown;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -385,20 +387,6 @@ function ensureObjectPayload(payload: unknown): Record<string, unknown> {
   return payload;
 }
 
-async function listCompanies(query: ListCompaniesQuery) {
-  const search = readOptionalQueryParam(query.search, 'search');
-  const location = readOptionalQueryParam(query.location, 'location');
-  const technologies = readQuerySlugList(query.tech ?? query.technology, 'tech');
-  const jobRoles = readQuerySlugList(query.role, 'role');
-
-  return companiesRepository.getApproved({
-    search,
-    location,
-    technologies,
-    jobRoles
-  });
-}
-
 async function listAllCompanies(query: ListAllCompaniesQuery) {
   const status = readOptionalStatusQueryParam(query.status, 'status');
 
@@ -585,6 +573,25 @@ async function rejectCompany(idParam: unknown) {
   }
 
   return updated;
+}
+
+// Update listCompanies function
+async function listCompanies(query: ListCompaniesQuery) {
+  const search = readOptionalQueryParam(query.search, 'search');
+  const location = readOptionalQueryParam(query.location, 'location');
+  const technologies = readQuerySlugList(query.tech ?? query.technology, 'tech');
+  const jobRoles = readQuerySlugList(query.role, 'role');
+  const page = readOptionalPositiveInt(query.page, 'page') ?? 1;       // ADD
+  const limit = readOptionalPositiveInt(query.limit, 'limit') ?? 12;   // ADD
+
+  return companiesRepository.getApproved({
+    search,
+    location,
+    technologies,
+    jobRoles,
+    page,   // ADD
+    limit,  // ADD
+  });
 }
 
 export default {

@@ -38,13 +38,6 @@ export interface CompanyRow {
   approvedAt: string | null;
 }
 
-export interface CompanyFilters {
-  search: string;
-  location: string;
-  technologies: string[];
-  jobRoles: string[];
-}
-
 export interface AdminCompanyFilters {
   status: CompanyStatus | null;
 }
@@ -143,46 +136,6 @@ async function getByIdWithClient(client: PoolClient, id: number): Promise<Compan
   );
 
   return result.rows[0] ?? null;
-}
-
-async function getApproved({
-  search,
-  location,
-  technologies,
-  jobRoles
-}: CompanyFilters): Promise<CompanyRow[]> {
-  const result = await pool.query<CompanyRow>(
-    `
-      ${companyFieldsSql}
-      WHERE c.status = 'approved'
-        AND ($1::text = '' OR c.name ILIKE '%' || $1 || '%')
-        AND ($2::text = '' OR COALESCE(c.location, '') ILIKE '%' || $2 || '%')
-        AND (
-          cardinality($3::text[]) = 0
-          OR EXISTS (
-            SELECT 1
-            FROM company_technologies ct
-            JOIN technologies t ON t.id = ct.technology_id
-            WHERE ct.company_id = c.id
-              AND t.slug = ANY ($3::text[])
-          )
-        )
-        AND (
-          cardinality($4::text[]) = 0
-          OR EXISTS (
-            SELECT 1
-            FROM company_job_roles cjr
-            JOIN job_roles jr ON jr.id = cjr.job_role_id
-            WHERE cjr.company_id = c.id
-              AND jr.slug = ANY ($4::text[])
-          )
-        )
-      ORDER BY c.name ASC
-    `,
-    [search, location, technologies, jobRoles]
-  );
-
-  return result.rows;
 }
 
 async function getAll({ status }: AdminCompanyFilters): Promise<CompanyRow[]> {
@@ -509,3 +462,75 @@ export default {
   updateById,
   deleteById
 };
+
+// Add to the CompanyFilters interface
+export interface CompanyFilters {
+  search: string;
+  location: string;
+  technologies: string[];
+  jobRoles: string[];
+  page: number;   // ADD
+  limit: number;  // ADD
+}
+
+// Add a return type
+export interface PaginatedCompanies {
+  companies: CompanyRow[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+// Replace the getApproved function
+async function getApproved({
+  search,
+  location,
+  technologies,
+  jobRoles,
+  page,
+  limit
+}: CompanyFilters): Promise<PaginatedCompanies> {
+  const offset = (page - 1) * limit;
+
+  const whereClause = `
+    WHERE c.status = 'approved'
+      AND ($1::text = '' OR c.name ILIKE '%' || $1 || '%')
+      AND ($2::text = '' OR COALESCE(c.location, '') ILIKE '%' || $2 || '%')
+      AND (
+        cardinality($3::text[]) = 0
+        OR EXISTS (
+          SELECT 1 FROM company_technologies ct
+          JOIN technologies t ON t.id = ct.technology_id
+          WHERE ct.company_id = c.id AND t.slug = ANY ($3::text[])
+        )
+      )
+      AND (
+        cardinality($4::text[]) = 0
+        OR EXISTS (
+          SELECT 1 FROM company_job_roles cjr
+          JOIN job_roles jr ON jr.id = cjr.job_role_id
+          WHERE cjr.company_id = c.id AND jr.slug = ANY ($4::text[])
+        )
+      )
+  `;
+
+  const [dataResult, countResult] = await Promise.all([
+    pool.query<CompanyRow>(
+      `${companyFieldsSql} ${whereClause} ORDER BY c.name ASC LIMIT $5 OFFSET $6`,
+      [search, location, technologies, jobRoles, limit, offset]
+    ),
+    pool.query<{ count: string }>(
+      `SELECT COUNT(*) FROM companies c ${whereClause}`,
+      [search, location, technologies, jobRoles]
+    )
+  ]);
+
+  const total = parseInt(countResult.rows[0]?.count ?? '0', 10);
+
+  return {
+    companies: dataResult.rows,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
+}

@@ -1,4 +1,4 @@
-// File overview: Runs db/seed.sql to insert starter rows into the database.
+  // File overview: Runs db/seed.sql to insert starter rows into the database.
 
 require('dotenv').config();
 
