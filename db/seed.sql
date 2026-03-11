@@ -211,6 +211,56 @@ VALUES
   ('Tide Partnership', NULL, 'https://www.linkedin.com/company/tidepartnership/', NULL, 'Brighton', NULL, 'approved', 1, 2, NOW()),
   ('Adaptive Lab', NULL, 'https://www.linkedin.com/company/adaptive-lab/', NULL, 'London', NULL, 'approved', 1, 2, NOW());
 
+INSERT INTO events (
+  name,
+  website,
+  location,
+  start_time,
+  end_time,
+  description,
+  status,
+  created_by_user_id,
+  approved_by_user_id,
+  approved_at
+)
+VALUES
+  (
+    'Brighton Tech Meetup',
+    'https://brighton-tech-meetup.example.com',
+    'Brighton',
+    NOW() + INTERVAL '14 days',
+    NOW() + INTERVAL '14 days 2 hours',
+    'Monthly meetup focused on modern web development and cloud infrastructure.',
+    'approved',
+    1,
+    2,
+    NOW()
+  ),
+  (
+    'AI Product Showcase',
+    'https://ai-product-showcase.example.com',
+    'London',
+    NOW() + INTERVAL '30 days',
+    NOW() + INTERVAL '30 days 3 hours',
+    'Demo day for AI-driven products and developer tooling.',
+    'approved',
+    2,
+    1,
+    NOW()
+  ),
+  (
+    'Full Stack Hiring Sprint',
+    'https://full-stack-hiring.example.com',
+    'London / Brighton',
+    NOW() + INTERVAL '45 days',
+    NOW() + INTERVAL '45 days 4 hours',
+    'Fast-paced hiring event with lightning talks from sponsoring companies.',
+    'approved',
+    3,
+    2,
+    NOW()
+  );
+
 INSERT INTO technologies (name, slug)
 VALUES
   ('Python', 'python'),
@@ -253,6 +303,48 @@ VALUES
   (
     (SELECT id FROM companies WHERE name = 'Dapper Labs Limited'),
     (SELECT id FROM technologies WHERE slug = 'typescript')
+  );
+
+INSERT INTO event_technologies (event_id, technology_id)
+VALUES
+  (
+    (SELECT id FROM events WHERE name = 'Brighton Tech Meetup'),
+    (SELECT id FROM technologies WHERE slug = 'react')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'Brighton Tech Meetup'),
+    (SELECT id FROM technologies WHERE slug = 'aws')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'AI Product Showcase'),
+    (SELECT id FROM technologies WHERE slug = 'python')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'AI Product Showcase'),
+    (SELECT id FROM technologies WHERE slug = 'django')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'Full Stack Hiring Sprint'),
+    (SELECT id FROM technologies WHERE slug = 'node.js')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'Full Stack Hiring Sprint'),
+    (SELECT id FROM technologies WHERE slug = 'typescript')
+  );
+
+INSERT INTO event_sponsors (event_id, company_id)
+VALUES
+  (
+    (SELECT id FROM events WHERE name = 'Brighton Tech Meetup'),
+    (SELECT id FROM companies WHERE name = 'DabApps')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'AI Product Showcase'),
+    (SELECT id FROM companies WHERE name = 'StoryStream')
+  ),
+  (
+    (SELECT id FROM events WHERE name = 'Full Stack Hiring Sprint'),
+    (SELECT id FROM companies WHERE name = 'Dapper Labs Limited')
   );
 
 INSERT INTO job_roles (name, slug)
