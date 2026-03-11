@@ -4,8 +4,11 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from './swagger.json';
 
 import adminCompaniesRouter from './routes/adminCompanies';
+import authRouter from './routes/auth';
 import errorHandler from './middleware/errorHandler';
 import notFound from './middleware/notFound';
 import companiesRouter from './routes/companies';
@@ -13,7 +16,9 @@ import eventsRouter from './routes/events';
 import healthRouter from './routes/health';
 import jobRolesRouter from './routes/jobRoles';
 import technologiesRouter from './routes/technologies';
+import userCompanyStatesRouter from './routes/userCompanyStates';
 import usersRouter from './routes/users';
+import commentsRouter from './routes/comments';
 
 const app = express();
 
@@ -33,6 +38,10 @@ app.use(
 );
 // Log each request in development format to make local debugging easier.
 app.use(morgan('dev'));
+
+// Serve interactive API documentation powered by Swagger UI.
+// Visit /api-docs in your browser to explore and test your endpoints.
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Provide a simple root endpoint so visiting the API URL in a browser
 // shows available routes instead of an immediate 404 response.
@@ -65,19 +74,32 @@ app.get('/', (_req, res) => {
       pendingCompanies: 'GET /api/admin/companies/pending',
       approveCompany: 'PATCH /api/admin/companies/:id/approve',
       rejectCompany: 'PATCH /api/admin/companies/:id/reject',
+      register: 'POST /auth/register',
+      login: 'POST /auth/login',
+      refresh: 'POST /auth/refresh',
+      logout: 'POST /auth/logout',
+      me: 'GET /auth/me',
+      userCompanyStates: 'GET /api/user-company-states',
+      userCompanyState: 'GET /api/user-company-states/:companyId',
+      upsertUserCompanyState: 'PUT /api/user-company-states/:companyId',
+      deleteUserCompanyState: 'DELETE /api/user-company-states/:companyId'
     },
   });
 });
 
 app.use('/health', healthRouter);
+app.use('/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/companies', companiesRouter);
 app.use('/api/events', eventsRouter)
 app.use('/api/technologies', technologiesRouter);
 app.use('/api/job-roles', jobRolesRouter);
+app.use('/api/user-company-states', userCompanyStatesRouter);
 app.use('/api/admin/companies', adminCompaniesRouter);
+app.use('/api', commentsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
+
 
 export default app;

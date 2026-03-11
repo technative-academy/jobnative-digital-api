@@ -1,10 +1,11 @@
 -- File overview: Inserts starter rows so the API has sample data on first run.
 
-INSERT INTO users (name, email)
+-- password_hash is bcrypt of 'password123' for all seed users
+INSERT INTO users (name, email, password_hash, role)
 VALUES
-  ('Ada Lovelace', 'ada@example.com'),
-  ('Grace Hopper', 'grace@example.com'),
-  ('Margaret Hamilton', 'margaret@example.com');
+  ('Ada Lovelace', 'ada@example.com', '$2b$10$dummyHashForSeedDataOnly000000000000000000000000000000', 'admin'),
+  ('Grace Hopper', 'grace@example.com', '$2b$10$dummyHashForSeedDataOnly000000000000000000000000000001', 'user'),
+  ('Margaret Hamilton', 'margaret@example.com', '$2b$10$dummyHashForSeedDataOnly000000000000000000000000000002', 'user');
 
 INSERT INTO companies (
   name,

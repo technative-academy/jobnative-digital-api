@@ -3,12 +3,14 @@
 import { Router } from 'express';
 
 import usersController from '../controllers/usersController';
+import authenticate from '../middleware/authenticate';
+import authoriseAdmin from '../middleware/authoriseAdmin';
 
 const router = Router();
 
-// Route files should map URLs to controller functions and nothing more.
-// Keeping them thin makes the API surface quick to scan and reason about.
+router.use(authenticate);
+router.use(authoriseAdmin);
+
 router.get('/', usersController.listUsers);
-router.post('/', usersController.createUser);
 
 export default router;

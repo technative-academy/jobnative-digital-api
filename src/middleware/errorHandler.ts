@@ -39,7 +39,7 @@ const errorHandler: ErrorRequestHandler = (error: HttpError, _req, res, _next) =
 
   // Include stack traces in development to speed up debugging.
   // Omit them in production so internal implementation details stay private.
-  if (process.env.NODE_ENV === 'development' && typeof error?.stack === 'string') {
+  if ((process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && typeof error?.stack === 'string') {
     payload.stack = error.stack;
   }
 
